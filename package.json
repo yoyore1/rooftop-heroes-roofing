@@ -1,0 +1,11 @@
+{
+  "name": "rooftop-heroes-pro",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Rooftop Heroes Roofing — premium roofing site (nanoroofal-style) + serverless lead capture.",
+  "scripts": {
+    "preview": "node _serve.mjs 3200"
+  },
+  "engines": { "node": ">=18" }
+}
