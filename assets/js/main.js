@@ -8,7 +8,7 @@
   const y = $("[data-year]"); if (y) y.textContent = new Date().getFullYear();
 
   /* ---------- placeholder labels for empty image slots (not the hero) ---------- */
-  $$("[data-img]:not(.hero__bg)").forEach((el) => el.classList.add("is-ph"));
+  $$("[data-img]:not(.hero__bg):not(.local__media)").forEach((el) => el.classList.add("is-ph"));
 
   /* ---------- header scroll state + sticky dock ---------- */
   const header = $("[data-header]");

@@ -114,7 +114,7 @@ p{margin:0}
 
 /* ============================ HERO ============================ */
 .hero{position:relative;color:#fff;isolation:isolate}
-.hero__bg{position:absolute;inset:0;z-index:-2}
+.hero__bg{position:absolute;inset:0;z-index:-2;background-image:url(/assets/img/hero.jpg);background-size:cover;background-position:center}
 .hero__bg.is-ph::after{color:rgba(255,255,255,.22)}
 .hero__scrim{position:absolute;inset:0;z-index:-1;
   background:linear-gradient(115deg,rgba(9,21,50,.96) 0%,rgba(9,21,50,.86) 42%,rgba(14,33,73,.66) 100%);}
@@ -164,7 +164,7 @@ p{margin:0}
 /* ============================ LOCAL ============================ */
 .local{padding:clamp(3.5rem,7vw,6rem) 0}
 .local__inner{display:grid;grid-template-columns:1fr 1.05fr;gap:3rem;align-items:center}
-.local__media{aspect-ratio:4/3;border-radius:var(--radius);box-shadow:var(--shadow)}
+.local__media{aspect-ratio:4/3;border-radius:var(--radius);box-shadow:var(--shadow);background-image:url(/assets/img/local.jpg);background-size:cover;background-position:center}
 .local__note{margin-top:1.2rem;font-weight:700;color:var(--navy)}
 
 /* ============================ REVIEWS ============================ */
