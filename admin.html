@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow">
   <title>Leads · Rooftop Heroes</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#b91c1c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="RH Leads">
+  <link rel="apple-touch-icon" href="/assets/img/logo.png">
   <style>
     :root {
       --red:#b91c1c; --red-dark:#991b1b; --ink:#111827; --muted:#6b7280;
@@ -177,5 +183,10 @@
 
   <div class="toast" data-toast></div>
   <script src="/assets/js/admin.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js");
+    }
+  </script>
 </body>
 </html>

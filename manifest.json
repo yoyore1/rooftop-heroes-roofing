@@ -1,0 +1,14 @@
+{
+  "name": "Rooftop Heroes Leads",
+  "short_name": "RH Leads",
+  "description": "Lead dashboard for Rooftop Heroes Roofing",
+  "start_url": "/admin",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#b91c1c",
+  "theme_color": "#b91c1c",
+  "icons": [
+    { "src": "/assets/img/logo.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/assets/img/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
