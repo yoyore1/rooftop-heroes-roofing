@@ -8,8 +8,8 @@
   <style>
     :root {
       --red:#b91c1c; --red-dark:#991b1b; --ink:#111827; --muted:#6b7280;
-      --line:#e5e7eb; --bg:#f3f4f6; --card:#ffffff;
-      --new:#b91c1c; --called:#2563eb; --quoted:#7c3aed; --won:#16a34a; --lost:#9ca3af;
+      --line:#e5e7eb; --bg:#f3f4f6; --card:#ffffff; --green:#16a34a; --green-dark:#15803d;
+      --new:#b91c1c; --called:#2563eb; --won:#16a34a; --lost:#9ca3af;
     }
     * { box-sizing:border-box; }
     body { margin:0; background:var(--bg); color:var(--ink);
@@ -27,67 +27,77 @@
     .login input { width:100%; padding:13px 14px; border:1px solid var(--line); border-radius:10px;
       font-size:16px; outline:none; }
     .login input:focus { border-color:var(--red); }
-    .login button { width:100%; margin-top:12px; padding:13px; border:0; border-radius:10px;
+    .login button { width:100%; margin-top:12px; padding:14px; border:0; border-radius:10px;
       background:var(--red); color:#fff; font-weight:700; font-size:16px; cursor:pointer; }
     .login button:active { background:var(--red-dark); }
     .login__err { color:var(--red); font-size:13px; text-align:center; margin-top:12px; min-height:18px; }
 
     /* ---- topbar ---- */
     .top { position:sticky; top:0; z-index:5; background:var(--red); color:#fff;
-      padding:14px 18px; display:flex; align-items:center; gap:12px; }
-    .top__title { font-weight:800; font-size:17px; display:flex; align-items:center; gap:8px; }
-    .live { width:9px; height:9px; border-radius:50%; background:#86efac; box-shadow:0 0 0 0 rgba(134,239,172,.7);
+      padding:15px 18px; display:flex; align-items:center; gap:10px; }
+    .top__title { font-weight:800; font-size:18px; display:flex; align-items:center; gap:8px; }
+    .live { width:9px; height:9px; border-radius:50%; background:#86efac;
       animation:pulse 2s infinite; }
     @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(134,239,172,.6)} 70%{box-shadow:0 0 0 7px rgba(134,239,172,0)} 100%{box-shadow:0 0 0 0 rgba(134,239,172,0)} }
     .top__spacer { flex:1; }
     .top__btn { background:rgba(255,255,255,.16); color:#fff; border:0; border-radius:9px;
-      padding:8px 12px; font-size:13px; font-weight:600; cursor:pointer; }
+      padding:9px 14px; font-size:14px; font-weight:600; cursor:pointer; }
     .top__btn:active { background:rgba(255,255,255,.28); }
 
-    .wrap { max-width:760px; margin:0 auto; padding:16px 14px 60px; }
+    .wrap { max-width:620px; margin:0 auto; padding:16px 14px 70px; }
 
-    /* ---- stats / filters ---- */
-    .stats { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
-    .chip { border:1px solid var(--line); background:#fff; border-radius:999px; padding:7px 13px;
-      font-size:13px; font-weight:600; cursor:pointer; color:var(--muted); display:flex; gap:7px; align-items:center; }
-    .chip.is-active { color:#fff; background:var(--ink); border-color:var(--ink); }
-    .chip .n { background:rgba(0,0,0,.06); border-radius:999px; padding:1px 8px; font-size:12px; }
-    .chip.is-active .n { background:rgba(255,255,255,.22); }
+    /* ---- friendly summary ---- */
+    .summary { font-size:18px; font-weight:800; padding:6px 2px 16px; }
+    .summary small { display:block; font-weight:500; font-size:14px; color:var(--muted); margin-top:3px; }
+    .summary.is-new { color:var(--red); }
 
-    .search { width:100%; padding:11px 14px; border:1px solid var(--line); border-radius:11px;
-      font-size:15px; margin-bottom:14px; outline:none; background:#fff; }
+    .search { width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:11px;
+      font-size:16px; margin-bottom:14px; outline:none; background:#fff; }
     .search:focus { border-color:var(--red); }
 
     /* ---- lead card ---- */
-    .lead { background:var(--card); border:1px solid var(--line); border-radius:14px;
-      padding:14px 15px; margin-bottom:11px; transition:box-shadow .2s, border-color .2s; }
+    .lead { background:var(--card); border:1px solid var(--line); border-radius:16px;
+      padding:16px; margin-bottom:13px; transition:box-shadow .2s, border-color .2s; }
     .lead.is-fresh { border-color:var(--red); box-shadow:0 0 0 3px rgba(185,28,28,.12); }
-    .lead__head { display:flex; align-items:flex-start; gap:10px; }
-    .lead__name { font-size:17px; font-weight:800; }
-    .lead__time { color:var(--muted); font-size:12.5px; margin-top:2px; }
-    .lead__svc { margin-left:auto; font-size:12px; font-weight:700; color:var(--red);
-      background:#fef2f2; border:1px solid #fee2e2; border-radius:999px; padding:4px 10px; white-space:nowrap; }
-    .lead__row { display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:10px; font-size:14.5px; }
-    .lead__row a { color:var(--called); font-weight:700; text-decoration:none; }
-    .lead__addr { color:var(--ink); }
-    .lead__msg { margin-top:10px; background:#f9fafb; border:1px solid #eef0f3; border-radius:10px;
-      padding:10px 12px; font-size:14.5px; line-height:1.5; white-space:pre-wrap; }
-    .lead__foot { display:flex; align-items:center; gap:10px; margin-top:12px; flex-wrap:wrap; }
-    .status { appearance:none; border:1px solid var(--line); border-radius:9px; padding:8px 30px 8px 12px;
-      font-size:13.5px; font-weight:700; cursor:pointer; color:#fff;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='white' fill='none' stroke-width='1.6'/%3E%3C/svg%3E");
-      background-repeat:no-repeat; background-position:right 11px center; }
-    .status[data-s="new"]{background-color:var(--new)} .status[data-s="called"]{background-color:var(--called)}
-    .status[data-s="quoted"]{background-color:var(--quoted)} .status[data-s="won"]{background-color:var(--won)}
-    .status[data-s="lost"]{background-color:var(--lost)}
-    .notes { flex:1; min-width:160px; border:1px solid var(--line); border-radius:9px; padding:8px 11px;
-      font-size:13.5px; outline:none; font-family:inherit; }
+    .lead__head { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+    .lead__name { font-size:20px; font-weight:800; }
+    .badge-new { background:var(--red); color:#fff; font-size:11px; font-weight:800; letter-spacing:.4px;
+      padding:3px 8px; border-radius:999px; text-transform:uppercase; }
+    .lead__svc { margin-left:auto; font-size:13px; font-weight:700; color:var(--red);
+      background:#fef2f2; border:1px solid #fee2e2; border-radius:999px; padding:5px 11px; }
+    .lead__time { color:var(--muted); font-size:13px; margin-top:3px; }
+
+    /* big primary action */
+    .lead__call { display:flex; align-items:center; justify-content:center; gap:9px;
+      margin-top:13px; padding:15px; border-radius:12px; background:var(--green); color:#fff;
+      text-decoration:none; font-size:18px; font-weight:800; }
+    .lead__call:active { background:var(--green-dark); }
+
+    .lead__addr { display:inline-flex; align-items:center; gap:6px; margin-top:12px;
+      font-size:15px; color:var(--called); text-decoration:none; font-weight:600; }
+    .lead__msg { margin-top:12px; background:#f9fafb; border:1px solid #eef0f3; border-radius:11px;
+      padding:12px 14px; font-size:15px; line-height:1.5; white-space:pre-wrap; }
+
+    /* status as plain tappable pills */
+    .status { margin-top:14px; }
+    .status__label { font-size:13px; color:var(--muted); margin-bottom:7px; }
+    .status__btns { display:flex; gap:8px; flex-wrap:wrap; }
+    .pill { border:1px solid var(--line); background:#fff; color:var(--muted); border-radius:999px;
+      padding:9px 16px; font-size:14px; font-weight:700; cursor:pointer; }
+    .pill.is-on[data-s="new"]{background:var(--new);color:#fff;border-color:var(--new)}
+    .pill.is-on[data-s="called"]{background:var(--called);color:#fff;border-color:var(--called)}
+    .pill.is-on[data-s="won"]{background:var(--won);color:#fff;border-color:var(--won)}
+    .pill.is-on[data-s="lost"]{background:var(--lost);color:#fff;border-color:var(--lost)}
+
+    .notes { width:100%; margin-top:12px; border:1px solid var(--line); border-radius:11px;
+      padding:11px 13px; font-size:15px; outline:none; font-family:inherit; }
     .notes:focus { border-color:var(--red); }
 
-    .empty { text-align:center; color:var(--muted); padding:50px 20px; }
-    .empty__icon { font-size:40px; }
+    .empty { text-align:center; color:var(--muted); padding:60px 20px; }
+    .empty__icon { font-size:46px; }
+    .empty__big { font-size:18px; font-weight:700; color:var(--ink); margin:10px 0 4px; }
     .toast { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); background:var(--ink);
-      color:#fff; padding:11px 18px; border-radius:11px; font-size:14px; font-weight:600;
+      color:#fff; padding:12px 20px; border-radius:12px; font-size:15px; font-weight:600;
       box-shadow:0 8px 24px rgba(0,0,0,.18); opacity:0; transition:opacity .2s, transform .2s; pointer-events:none; }
     .toast.show { opacity:1; transform:translateX(-50%) translateY(-4px); }
   </style>
@@ -98,7 +108,7 @@
     <form class="login__card" data-login>
       <div class="login__logo">🦸</div>
       <div class="login__title">Rooftop Heroes</div>
-      <div class="login__sub">Lead dashboard — sign in</div>
+      <div class="login__sub">Your leads — sign in</div>
       <input type="password" name="password" placeholder="Password" autocomplete="current-password" required>
       <button type="submit">Sign in</button>
       <div class="login__err" data-login-err></div>
@@ -108,14 +118,13 @@
   <!-- ============ DASHBOARD ============ -->
   <section data-view="dash" class="hidden">
     <header class="top">
-      <div class="top__title">🦸 Leads <span class="live" title="Live — auto-refreshing"></span></div>
+      <div class="top__title">🦸 Leads <span class="live" title="Live — updates automatically"></span></div>
       <div class="top__spacer"></div>
-      <button class="top__btn" data-refresh>Refresh</button>
       <button class="top__btn" data-logout>Sign out</button>
     </header>
     <div class="wrap">
-      <div class="stats" data-stats></div>
-      <input class="search" data-search placeholder="Search name, phone, address…">
+      <div class="summary" data-summary></div>
+      <input class="search hidden" data-search placeholder="Search a name or phone…">
       <div data-list></div>
     </div>
   </section>
