@@ -57,36 +57,10 @@
     const status = $("[data-form-status]", form);
     const LOAD_TS = Date.now();
     const defaultMsg = status ? status.textContent : "";
-    // Photo preview + label update on file select
-    const photoInput = $("[data-file-input]", form);
-    const fileText = $("[data-file-text]", form);
-    const fileLabel = $("[data-file-label]", form);
-    const previewEl = $("[data-photo-preview]", form);
-    if (photoInput) {
-      photoInput.addEventListener("change", () => {
-        const files = Array.from(photoInput.files || []);
-        if (fileText) {
-          fileText.innerHTML = files.length
-            ? `${files.length} photo${files.length > 1 ? "s" : ""} selected`
-            : 'Attach photos of your roof <span>(optional — up to 10)</span>';
-        }
-        if (fileLabel) fileLabel.classList.toggle("has-file", files.length > 0);
-        if (previewEl) {
-          // revoke old object URLs
-          previewEl.querySelectorAll("img").forEach(img => URL.revokeObjectURL(img.src));
-          previewEl.innerHTML = files.slice(0, 10).map(f => {
-            const url = URL.createObjectURL(f);
-            return `<img class="photo-thumb" src="${url}" alt="${f.name}">`;
-          }).join("");
-        }
-      });
-    }
-
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(form);
-      const photoFiles = Array.from(fd.getAll("photo")).filter(f => f instanceof File && f.size > 0).slice(0, 10);
-      const data = Object.fromEntries([...fd.entries()].filter(([k]) => k !== "photo"));
+      const data = Object.fromEntries(fd.entries());
 
       const name = (data.name || "").trim();
       const phone = (data.phone || "").trim();
@@ -95,25 +69,7 @@
 
       if (status) { status.textContent = "Sending…"; status.className = "inspect__fine"; }
 
-      // Upload all photos in parallel, then submit
-      let photo_urls = [];
-      if (photoFiles.length) {
-        if (status) status.textContent = `Uploading ${photoFiles.length} photo${photoFiles.length > 1 ? "s" : ""}…`;
-        photo_urls = (await Promise.all(photoFiles.map(async f => {
-          try {
-            const up = await fetch("/api/upload", {
-              method: "POST",
-              headers: { "Content-Type": f.type || "image/jpeg" },
-              body: f,
-            });
-            const j = await up.json().catch(() => ({}));
-            return up.ok && j.ok ? j.url : null;
-          } catch { return null; }
-        }))).filter(Boolean);
-        if (status) status.textContent = "Sending…";
-      }
-
-      const payload = { ...data, _ts: LOAD_TS, photo_urls };
+      const payload = { ...data, _ts: LOAD_TS };
       try {
         const res = await fetch("/api/estimate", {
           method: "POST",

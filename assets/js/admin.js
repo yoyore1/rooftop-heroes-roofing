@@ -18,13 +18,6 @@
   const trashListEl = $("[data-trash-list]");
   const trashCountEl = $("[data-trash-count]");
 
-  // Lightbox for full-size roof photos
-  const lightbox = document.createElement("div");
-  lightbox.className = "lightbox";
-  lightbox.innerHTML = `<img alt="Roof photo">`;
-  document.body.appendChild(lightbox);
-  lightbox.addEventListener("click", () => lightbox.classList.remove("open"));
-
   let leads = [];
   let query = "";
   let knownIds = new Set();
@@ -217,11 +210,6 @@
       ? `<a class="lead__addr" href="https://maps.google.com/?q=${encodeURIComponent(l.address)}" target="_blank" rel="noopener">📍 ${esc(l.address)}</a>`
       : "";
     const msg = l.message ? `<div class="lead__msg">${esc(l.message)}</div>` : "";
-    const photos = [...new Set([l.photo_url, ...(l.photo_urls || [])].filter(Boolean))];
-    const gridClass = photos.length === 1 ? "lead__photos--1" : photos.length === 2 ? "lead__photos--2" : "lead__photos--many";
-    const photo = photos.length
-      ? `<div class="lead__photos ${gridClass}">${photos.map(u => `<img class="lead__photo-thumb" src="${esc(u)}" alt="Roof photo" loading="lazy" data-photo="${esc(u)}">`).join("")}</div>`
-      : "";
     const followupTag = l.followup_date
       ? (isOverdue
           ? `<span class="tag-overdue">⚠️ Follow up: ${fmtDate(l.followup_date)}</span>`
@@ -244,7 +232,6 @@
       <a class="lead__call" href="tel:${esc(telHref(l.phone))}">📞 Call ${esc(l.phone)}</a>
       ${addr}
       ${msg}
-      ${photo}
       <div class="status">
         <div class="status__label">Where's it at?</div>
         <div class="status__btns">${pills}</div>
@@ -320,12 +307,7 @@
         });
       }
 
-      el.querySelectorAll("[data-photo]").forEach(img => {
-        img.addEventListener("click", () => {
-          lightbox.querySelector("img").src = img.dataset.photo;
-          lightbox.classList.add("open");
-        });
-      });
+
     });
   }
 
