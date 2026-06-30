@@ -66,6 +66,20 @@
     show("login");
   });
 
+  const refreshBtn = $("[data-refresh]");
+  if (refreshBtn) {
+    refreshBtn.addEventListener("click", async () => {
+      if (refreshBtn.disabled) return;
+      refreshBtn.disabled = true;
+      const orig = refreshBtn.textContent;
+      refreshBtn.textContent = "↻ Refreshing…";
+      await load(true);
+      refreshBtn.textContent = orig;
+      refreshBtn.disabled = false;
+      toast("Refreshed ✓");
+    });
+  }
+
   /* ---------- dashboard ---------- */
   function startDash() { show("dash"); load(); startPoll(); }
   function startPoll() { stopPoll(); pollTimer = setInterval(() => load(true), 8000); }
