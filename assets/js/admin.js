@@ -184,7 +184,7 @@
       return new Date(b.created_at) - new Date(a.created_at);
     });
     if (query) rows = rows.filter((l) =>
-      [l.name, l.phone, l.address, l.service, l.message].filter(Boolean).join(" ").toLowerCase().includes(query));
+      [l.name, l.phone, l.email, l.address, l.service, l.message].filter(Boolean).join(" ").toLowerCase().includes(query));
 
     if (!rows.length) {
       listEl.innerHTML = leads.length
@@ -209,6 +209,9 @@
     const addr = l.address
       ? `<a class="lead__addr" href="https://maps.google.com/?q=${encodeURIComponent(l.address)}" target="_blank" rel="noopener">📍 ${esc(l.address)}</a>`
       : "";
+    const email = l.email
+      ? `<a class="lead__email" href="mailto:${esc(l.email)}">✉️ ${esc(l.email)}</a>`
+      : "";
     const msg = l.message ? `<div class="lead__msg">${esc(l.message)}</div>` : "";
     const followupTag = l.followup_date
       ? (isOverdue
@@ -230,6 +233,7 @@
       </div>
       <div class="lead__time">${timeAgo(l.created_at)}${followupTag ? " · " + followupTag : ""}</div>
       <a class="lead__call" href="tel:${esc(telHref(l.phone))}">📞 Call ${esc(l.phone)}</a>
+      ${email}
       ${addr}
       ${msg}
       <div class="status">

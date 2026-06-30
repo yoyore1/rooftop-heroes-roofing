@@ -55,18 +55,25 @@
   const form = $("[data-form]");
   if (form) {
     const status = $("[data-form-status]", form);
+    const submitBtn = $('button[type="submit"]', form);
     const LOAD_TS = Date.now();
     const defaultMsg = status ? status.textContent : "";
+    let submitting = false;
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (submitting) return; // guard against double-submit
       const fd = new FormData(form);
       const data = Object.fromEntries(fd.entries());
 
       const name = (data.name || "").trim();
       const phone = (data.phone || "").trim();
+      const email = (data.email || "").trim();
       if (name.length < 2) return fail("Please enter your name.");
       if (phone.replace(/\D/g, "").length < 7) return fail("Please enter a valid phone number.");
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail("Please enter a valid email address.");
 
+      submitting = true;
+      if (submitBtn) submitBtn.disabled = true;
       if (status) { status.textContent = "Sending…"; status.className = "inspect__fine"; }
 
       const payload = { ...data, _ts: LOAD_TS };
@@ -79,6 +86,7 @@
         const json = await res.json().catch(() => ({}));
         if (res.ok && json.ok) {
           form.reset();
+          // leave the button disabled on success so the same lead can't be resubmitted
           if (status) { status.textContent = "✅ Got it! A Rooftop Hero will reach out shortly to schedule your free inspection."; status.className = "inspect__fine is-ok"; }
         } else {
           fail(json.error || "Something went wrong. Please call (501) 772-8243.");
@@ -88,7 +96,11 @@
         form.reset();
       }
     });
-    function fail(msg) { if (status) { status.textContent = msg; status.className = "inspect__fine is-err"; } }
+    function fail(msg) {
+      submitting = false;
+      if (submitBtn) submitBtn.disabled = false;
+      if (status) { status.textContent = msg; status.className = "inspect__fine is-err"; }
+    }
     form.addEventListener("input", () => { if (status && status.classList.contains("is-err")) { status.textContent = defaultMsg; status.className = "inspect__fine"; } });
   }
 })();
