@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Rooftop Heroes Roofing — premium roofing site (nanoroofal-style) + serverless lead capture.",
   "scripts": {
+    "dev": "node _dev.mjs 3200",
     "preview": "node _serve.mjs 3200"
   },
   "engines": { "node": ">=18" }

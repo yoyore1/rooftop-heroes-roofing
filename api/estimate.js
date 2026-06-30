@@ -1,7 +1,10 @@
 // Vercel serverless function: receives free-inspection / lead submissions.
-// Validates, blocks spam, and emails the lead via Resend if configured.
-// Until RESEND_API_KEY + LEAD_EMAIL are set in Vercel, leads appear in the
-// function logs and the form still confirms success (phone is the primary CTA).
+// Validates, blocks spam, SAVES the lead to Supabase, then notifies the owner
+// by email (Resend) and SMS (Twilio). Saving and notifying are independent —
+// a lead is never lost just because one channel is misconfigured or down.
+
+import { insertLead, dbConfigured } from "../lib/db.js";
+import { notifyLead } from "../lib/notify.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -25,14 +28,26 @@ export default async function handler(req, res) {
   const lead = {
     name: name.slice(0, 80),
     phone: phone.slice(0, 30),
-    address: String(b.address || "").trim().slice(0, 160),
-    service: String(b.service || "").trim().slice(0, 80),
-    message: String(b.message || "").trim().slice(0, 2000),
-    at: new Date().toISOString(),
+    address: String(b.address || "").trim().slice(0, 160) || null,
+    service: String(b.service || "").trim().slice(0, 80) || null,
+    message: String(b.message || "").trim().slice(0, 2000) || null,
+    source: "website",
   };
 
-  try { await deliver(lead); } catch (e) { console.error("[inspection] delivery failed:", e.message); }
-  console.log("[lead]", JSON.stringify(lead));
+  // Persist first so the lead survives even if notifications fail. If the DB
+  // isn't configured yet, fall back to an in-memory record so we can still
+  // notify + log.
+  let saved = { ...lead, created_at: new Date().toISOString() };
+  try {
+    if (dbConfigured()) saved = await insertLead(lead);
+    else console.warn("[estimate] DB not configured — lead not persisted, logging only");
+  } catch (e) {
+    console.error("[estimate] save failed:", e.message);
+  }
+
+  console.log("[lead]", JSON.stringify(saved));
+
+  try { await notifyLead(saved); } catch (e) { console.error("[estimate] notify failed:", e.message); }
 
   return res.status(200).json({ ok: true });
 }
@@ -40,26 +55,4 @@ export default async function handler(req, res) {
 function safeParse(body) {
   if (!body) return {};
   try { return JSON.parse(body); } catch { return {}; }
-}
-
-async function deliver(lead) {
-  const key = process.env.RESEND_API_KEY;
-  const to = process.env.LEAD_EMAIL;
-  if (!key || !to) return; // not configured yet — lead is captured in logs
-  const from = process.env.LEAD_FROM || "Rooftop Heroes Leads <onboarding@resend.dev>";
-  const text = [
-    "New free-inspection request from the website:", "",
-    `Name:     ${lead.name}`,
-    `Phone:    ${lead.phone}`,
-    `Address:  ${lead.address || "—"}`,
-    `Service:  ${lead.service || "—"}`,
-    "", "Message:", lead.message || "—",
-  ].join("\n");
-
-  const r = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from, to, subject: `🦸 New roofing lead — ${lead.name}`, text }),
-  });
-  if (!r.ok) throw new Error(`resend ${r.status}: ${(await r.text()).slice(0, 200)}`);
 }

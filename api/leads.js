@@ -1,0 +1,48 @@
+// Dashboard data endpoint (auth required via the session cookie).
+//   GET   -> { leads: [...] }        most recent first
+//   PATCH -> { id, status?, notes? } update a single lead
+
+import { isAuthed } from "../lib/auth.js";
+import { listLeads, updateLead, dbConfigured } from "../lib/db.js";
+
+const STATUSES = ["new", "called", "quoted", "won", "lost"];
+
+export default async function handler(req, res) {
+  if (!isAuthed(req)) return res.status(401).json({ ok: false, error: "Not authenticated" });
+  if (!dbConfigured()) return res.status(500).json({ ok: false, error: "Database not configured" });
+
+  try {
+    if (req.method === "GET") {
+      const leads = await listLeads({ limit: 300 });
+      return res.status(200).json({ ok: true, leads });
+    }
+
+    if (req.method === "PATCH") {
+      const b = (req.body && typeof req.body === "object") ? req.body : safeParse(req.body);
+      const id = String(b.id || "");
+      if (!id) return res.status(400).json({ ok: false, error: "Missing id" });
+
+      const patch = {};
+      if (b.status != null) {
+        if (!STATUSES.includes(b.status)) return res.status(400).json({ ok: false, error: "Invalid status" });
+        patch.status = b.status;
+      }
+      if (b.notes != null) patch.notes = String(b.notes).slice(0, 2000);
+      if (!Object.keys(patch).length) return res.status(400).json({ ok: false, error: "Nothing to update" });
+
+      const lead = await updateLead(id, patch);
+      return res.status(200).json({ ok: true, lead });
+    }
+
+    res.setHeader("Allow", "GET, PATCH");
+    return res.status(405).json({ ok: false, error: "Method not allowed" });
+  } catch (e) {
+    console.error("[leads]", e.message);
+    return res.status(500).json({ ok: false, error: "Server error" });
+  }
+}
+
+function safeParse(body) {
+  if (!body) return {};
+  try { return JSON.parse(body); } catch { return {}; }
+}
