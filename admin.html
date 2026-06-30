@@ -53,9 +53,16 @@
     .wrap { max-width:620px; margin:0 auto; padding:16px 14px 70px; }
 
     /* ---- friendly summary ---- */
+    .summary-row { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+    .summary-row .summary { flex:1; }
     .summary { font-size:18px; font-weight:800; padding:6px 2px 16px; }
     .summary small { display:block; font-weight:500; font-size:14px; color:var(--muted); margin-top:3px; }
     .summary.is-new { color:var(--red); }
+    .refresh-btn { flex-shrink:0; margin-top:4px; display:inline-flex; align-items:center; gap:5px;
+      white-space:nowrap; background:#fff; color:var(--red); border:1.5px solid var(--red);
+      border-radius:10px; padding:9px 13px; font-size:14px; font-weight:700; cursor:pointer; }
+    .refresh-btn:active { background:#fff5f5; }
+    .refresh-btn:disabled { opacity:.55; cursor:default; }
 
     .search { width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:11px;
       font-size:16px; margin-bottom:14px; outline:none; background:#fff; }
@@ -170,11 +177,13 @@
     <header class="top">
       <div class="top__title">🦸 Leads <span class="live" title="Live — updates automatically"></span></div>
       <div class="top__spacer"></div>
-      <button class="top__btn" data-refresh title="Check for new leads now">↻ Refresh</button>
       <button class="top__btn" data-logout>Sign out</button>
     </header>
     <div class="wrap">
-      <div class="summary" data-summary></div>
+      <div class="summary-row">
+        <div class="summary" data-summary></div>
+        <button class="refresh-btn" data-refresh title="Check for new leads now">↻ Refresh</button>
+      </div>
       <input class="search hidden" data-search placeholder="Search a name or phone…">
       <div data-list></div>
       <div class="trash-section" data-trash-section>
@@ -185,7 +194,7 @@
   </section>
 
   <div class="toast" data-toast></div>
-  <script src="/assets/js/admin.js?v=3"></script>
+  <script src="/assets/js/admin.js?v=4"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js");
