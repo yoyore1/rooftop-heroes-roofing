@@ -25,12 +25,12 @@ export default async function handler(req, res) {
   const email = String(b.email || "").trim();
   if (name.length < 2) return res.status(400).json({ ok: false, error: "Please enter your name" });
   if (phone.replace(/\D/g, "").length < 7) return res.status(400).json({ ok: false, error: "Please enter a valid phone number" });
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ ok: false, error: "Please enter a valid email address" });
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ ok: false, error: "Please enter a valid email address" });
 
   const lead = {
     name: name.slice(0, 80),
     phone: phone.slice(0, 30),
-    email: email.slice(0, 120),
+    email: email.slice(0, 120) || null,
     address: String(b.address || "").trim().slice(0, 200) || null,
     service: String(b.service || "").trim().slice(0, 80) || null,
     message: String(b.message || "").trim().slice(0, 2000) || null,

@@ -67,7 +67,7 @@
       const email = (data.email || "").trim();
       if (name.length < 2) return fail("Please enter your name.");
       if (phone.replace(/\D/g, "").length < 7) return fail("Please enter a valid phone number.");
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail("Please enter a valid email address.");
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail("Please enter a valid email address.");
 
       if (status) { status.textContent = "Sending…"; status.className = "inspect__fine"; }
 
