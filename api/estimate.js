@@ -31,6 +31,7 @@ export default async function handler(req, res) {
     phone: phone.slice(0, 30),
     address: String(b.address || "").trim().slice(0, 160) || null,
     service: String(b.service || "").trim().slice(0, 80) || null,
+    best_time: String(b.best_time || "").trim().slice(0, 40) || null,
     message: String(b.message || "").trim().slice(0, 2000) || null,
     photo_url: photoUrl.startsWith("https://") ? photoUrl : null,
     source: "website",

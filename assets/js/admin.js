@@ -14,6 +14,9 @@
   const listEl = $("[data-list]");
   const searchEl = $("[data-search]");
   const toastEl = $("[data-toast]");
+  const trashToggleBtn = $("[data-trash-toggle]");
+  const trashListEl = $("[data-trash-list]");
+  const trashCountEl = $("[data-trash-count]");
 
   // Lightbox for full-size roof photos
   const lightbox = document.createElement("div");
@@ -27,6 +30,8 @@
   let knownIds = new Set();
   let pollTimer = null;
   let firstLoad = true;
+  let trashOpen = false;
+  let trashLeads = [];
 
   function show(view) {
     views.login.classList.toggle("hidden", view !== "login");
@@ -64,7 +69,7 @@
   $("[data-logout]").addEventListener("click", async () => {
     try { await fetch("/api/login", { method: "DELETE" }); } catch {}
     stopPoll();
-    leads = []; knownIds = new Set(); firstLoad = true;
+    leads = []; knownIds = new Set(); firstLoad = true; trashLeads = [];
     show("login");
   });
 
@@ -99,6 +104,62 @@
       }
       firstLoad = false;
     } catch { /* keep last good render */ }
+  }
+
+  async function loadTrash() {
+    try {
+      const r = await fetch("/api/leads?trash=1");
+      if (!r.ok) return;
+      const j = await r.json();
+      if (j.ok) { trashLeads = j.leads; renderTrash(); }
+    } catch {}
+  }
+
+  /* ---------- trash toggle ---------- */
+  trashToggleBtn.addEventListener("click", () => {
+    trashOpen = !trashOpen;
+    trashListEl.classList.toggle("hidden", !trashOpen);
+    if (trashOpen && !trashLeads.length) loadTrash();
+    else renderTrash();
+  });
+
+  function renderTrash() {
+    trashCountEl.textContent = trashLeads.length || "";
+    if (!trashOpen) return;
+    if (!trashLeads.length) {
+      trashListEl.innerHTML = `<p style="color:var(--muted);font-size:14px;padding:6px 0">No deleted leads.</p>`;
+      return;
+    }
+    trashListEl.innerHTML = trashLeads.map((l) => `
+      <div class="trash-card" data-trash-id="${esc(l.id)}">
+        <div class="trash-card__info">
+          <div class="trash-card__name">${esc(l.name)}</div>
+          <div class="trash-card__sub">${esc(l.phone)}${l.service ? " · " + esc(l.service) : ""} · ${timeAgo(l.created_at)}</div>
+        </div>
+        <button class="trash-restore" data-restore>↩ Restore</button>
+      </div>`).join("");
+
+    trashListEl.querySelectorAll("[data-restore]").forEach((btn) => {
+      const card = btn.closest("[data-trash-id]");
+      btn.addEventListener("click", async () => {
+        const id = card.dataset.trashId;
+        const r = await fetch("/api/leads", {
+          method: "PATCH", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, restore: true }),
+        });
+        if (!r.ok) { toast("Couldn't restore — try again"); return; }
+        const restored = trashLeads.find((l) => l.id === id);
+        trashLeads = trashLeads.filter((l) => l.id !== id);
+        if (restored) {
+          restored.is_deleted = false;
+          leads.unshift(restored);
+          knownIds.add(restored.id);
+        }
+        renderTrash();
+        render([]);
+        toast("Lead restored ✓");
+      });
+    });
   }
 
   searchEl.addEventListener("input", () => { query = searchEl.value.trim().toLowerCase(); render([]); });
@@ -159,6 +220,8 @@
     const photo = l.photo_url
       ? `<img class="lead__photo" src="${esc(l.photo_url)}" alt="Roof photo" loading="lazy" data-photo="${esc(l.photo_url)}">`
       : "";
+    const bestTime = l.best_time && l.best_time !== "Anytime"
+      ? `<div class="lead__besttime">🕐 Best time: ${esc(l.best_time)}</div>` : "";
 
     const followupTag = l.followup_date
       ? (isOverdue
@@ -180,6 +243,7 @@
       </div>
       <div class="lead__time">${timeAgo(l.created_at)}${followupTag ? " · " + followupTag : ""}</div>
       <a class="lead__call" href="tel:${esc(telHref(l.phone))}">📞 Call ${esc(l.phone)}</a>
+      ${bestTime}
       ${addr}
       ${msg}
       ${photo}
@@ -200,7 +264,6 @@
     listEl.querySelectorAll(".lead").forEach((el) => {
       const id = el.dataset.id;
 
-      // Status pills
       el.querySelectorAll("[data-set]").forEach((btn) => {
         btn.addEventListener("click", async () => {
           const status = btn.dataset.s;
@@ -211,7 +274,6 @@
         });
       });
 
-      // Notes
       const notes = el.querySelector("[data-notes]");
       let last = notes.value;
       notes.addEventListener("blur", async () => {
@@ -221,7 +283,6 @@
         await patch(id, { notes: notes.value });
       });
 
-      // Follow-up date
       const followupInput = el.querySelector("[data-followup]");
       if (followupInput) {
         followupInput.addEventListener("change", async () => {
@@ -232,7 +293,6 @@
         });
       }
 
-      // Clear follow-up
       const clearBtn = el.querySelector("[data-clear-followup]");
       if (clearBtn) {
         clearBtn.addEventListener("click", async () => {
@@ -242,19 +302,26 @@
         });
       }
 
-      // Delete
       const delBtn = el.querySelector("[data-delete]");
       if (delBtn) {
         delBtn.addEventListener("click", async () => {
-          if (!confirm("Delete this lead? This can't be undone.")) return;
-          await del(id);
+          if (!confirm("Move this lead to trash? You can restore it any time.")) return;
+          const r = await fetch("/api/leads", {
+            method: "DELETE", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id }),
+          });
+          if (!r.ok) { toast("Couldn't delete — try again"); return; }
+          const deleted = leads.find((l) => l.id === id);
           leads = leads.filter((l) => l.id !== id);
           knownIds.delete(id);
+          if (deleted) trashLeads.unshift({ ...deleted, is_deleted: true });
+          trashCountEl.textContent = trashLeads.length || "";
+          if (trashOpen) renderTrash();
           render([]);
+          toast("Moved to trash · see below to restore");
         });
       }
 
-      // Photo lightbox
       const photoImg = el.querySelector("[data-photo]");
       if (photoImg) {
         photoImg.addEventListener("click", () => {
@@ -272,16 +339,6 @@
         body: JSON.stringify({ id, ...body }),
       });
       if (!r.ok) toast("Couldn't save — try again");
-    } catch { toast("Network error"); }
-  }
-
-  async function del(id) {
-    try {
-      const r = await fetch("/api/leads", {
-        method: "DELETE", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      if (!r.ok) toast("Couldn't delete — try again");
     } catch { toast("Network error"); }
   }
 
@@ -315,7 +372,7 @@
   let toastTimer = null;
   function toast(msg) {
     toastEl.textContent = msg; toastEl.classList.add("show");
-    clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove("show"), 3200);
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove("show"), 3800);
   }
   function ping() {
     try {

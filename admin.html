@@ -106,6 +106,26 @@
       opacity:.3; border-radius:6px; line-height:1; margin-left:auto; flex-shrink:0; }
     .lead__del:hover { opacity:1; background:#fef2f2; }
 
+    /* best time badge */
+    .lead__besttime { font-size:13px; color:var(--muted); margin-top:2px; }
+
+    /* trash section */
+    .trash-section { margin-top:32px; border-top:1px solid var(--line); padding-top:16px; }
+    .trash-toggle { background:none; border:none; cursor:pointer; font-size:14px; color:var(--muted);
+      font-weight:600; padding:6px 0; display:flex; align-items:center; gap:6px; }
+    .trash-toggle:hover { color:var(--ink); }
+    .trash-toggle [data-trash-count]:not(:empty)::before { content:"("; }
+    .trash-toggle [data-trash-count]:not(:empty)::after { content:")"; }
+    .trash-list { margin-top:12px; }
+    .trash-card { background:#f9fafb; border:1px solid var(--line); border-radius:14px;
+      padding:14px 16px; margin-bottom:10px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .trash-card__info { flex:1; min-width:0; }
+    .trash-card__name { font-weight:800; font-size:16px; }
+    .trash-card__sub { font-size:13px; color:var(--muted); margin-top:2px; }
+    .trash-restore { background:var(--green); color:#fff; border:none; border-radius:9px;
+      padding:9px 16px; font-size:14px; font-weight:700; cursor:pointer; white-space:nowrap; }
+    .trash-restore:active { background:var(--green-dark); }
+
     /* photo */
     .lead__photo { width:100%; max-height:220px; object-fit:cover; border-radius:11px;
       margin-top:12px; display:block; cursor:zoom-in; }
@@ -156,6 +176,10 @@
       <div class="summary" data-summary></div>
       <input class="search hidden" data-search placeholder="Search a name or phone…">
       <div data-list></div>
+      <div class="trash-section" data-trash-section>
+        <button class="trash-toggle" data-trash-toggle>🗑 Deleted leads <span data-trash-count></span></button>
+        <div class="trash-list hidden" data-trash-list></div>
+      </div>
     </div>
   </section>
 

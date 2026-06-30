@@ -57,6 +57,23 @@
     const status = $("[data-form-status]", form);
     const LOAD_TS = Date.now();
     const defaultMsg = status ? status.textContent : "";
+    // Show filename when photo is selected
+    const photoInput = $("[data-file-input]", form);
+    const fileText = $("[data-file-text]", form);
+    const fileLabel = photoInput && photoInput.closest(".file-label");
+    if (photoInput && fileText) {
+      photoInput.addEventListener("change", () => {
+        const f = photoInput.files[0];
+        if (f) {
+          fileText.textContent = f.name;
+          if (fileLabel) fileLabel.classList.add("has-file");
+        } else {
+          fileText.innerHTML = 'Attach a photo of your roof <span>(optional)</span>';
+          if (fileLabel) fileLabel.classList.remove("has-file");
+        }
+      });
+    }
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(form);

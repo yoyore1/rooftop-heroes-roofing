@@ -299,41 +299,62 @@
           <a class="inspect__call" href="tel:+15017728243">Prefer to talk? Call <strong>(501) 772-8243</strong></a>
         </div>
         <form class="inspect__form" data-form novalidate>
-          <div class="field">
-            <label for="f-name">Your name</label>
-            <input id="f-name" name="name" type="text" autocomplete="name" required>
-          </div>
-          <div class="field">
-            <label for="f-phone">Phone</label>
-            <input id="f-phone" name="phone" type="tel" autocomplete="tel" required>
+          <div class="field-row">
+            <div class="field">
+              <label for="f-name">Your name</label>
+              <input id="f-name" name="name" type="text" autocomplete="name" placeholder="John Smith" required>
+            </div>
+            <div class="field">
+              <label for="f-phone">Phone number</label>
+              <input id="f-phone" name="phone" type="tel" autocomplete="tel" placeholder="(501) 555-0100" required>
+            </div>
           </div>
           <div class="field">
             <label for="f-address">Property address <span>(optional)</span></label>
-            <input id="f-address" name="address" type="text" autocomplete="street-address">
+            <input id="f-address" name="address" type="text" autocomplete="street-address" placeholder="123 Main St, Little Rock, AR">
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="f-service">What do you need?</label>
+              <select id="f-service" name="service">
+                <option>Free roof inspection</option>
+                <option>Roof repair</option>
+                <option>Roof replacement</option>
+                <option>Storm / hail damage</option>
+                <option>Insurance claim help</option>
+                <option>Roof maintenance</option>
+                <option>Something else</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="f-time">Best time to call?</label>
+              <select id="f-time" name="best_time">
+                <option value="Anytime">Anytime works</option>
+                <option value="Morning (8 am–12 pm)">Morning (8 am – 12 pm)</option>
+                <option value="Afternoon (12–5 pm)">Afternoon (12 – 5 pm)</option>
+                <option value="Evening (5–8 pm)">Evening (5 – 8 pm)</option>
+              </select>
+            </div>
           </div>
           <div class="field">
-            <label for="f-service">What do you need?</label>
-            <select id="f-service" name="service">
-              <option>Free roof inspection</option>
-              <option>Roof repair</option>
-              <option>Roof replacement</option>
-              <option>Storm / hail damage</option>
-              <option>Insurance claim help</option>
-              <option>Roof maintenance</option>
-              <option>Something else</option>
-            </select>
+            <label for="f-msg">Anything we should know? <span>(optional)</span></label>
+            <textarea id="f-msg" name="message" rows="2" placeholder="e.g. Active leak, storm damage, age of roof…"></textarea>
           </div>
           <div class="field">
-            <label for="f-msg">Tell us about your roof <span>(optional)</span></label>
-            <textarea id="f-msg" name="message" rows="3"></textarea>
-          </div>
-          <div class="field">
-            <label for="f-photo">Photo of your roof <span>(optional)</span></label>
-            <input id="f-photo" name="photo" type="file" accept="image/*,image/heic">
+            <label class="file-label">
+              <span class="file-label__icon">📷</span>
+              <span class="file-label__text" data-file-text>Attach a photo of your roof <span>(optional)</span></span>
+              <input id="f-photo" name="photo" type="file" accept="image/*,image/heic" data-file-input>
+            </label>
           </div>
           <input class="hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">
-          <button class="btn btn--red btn--lg btn--block" type="submit">Send — Get My Free Inspection</button>
+          <button class="btn btn--red btn--lg btn--block" type="submit">Book My Free Roof Inspection →</button>
           <p class="inspect__fine" data-form-status>No spam, ever. We'll only use your info to schedule your inspection.</p>
+          <div class="form-trust">
+            <span>✓ We call within 2 hours</span>
+            <span>✓ 100% free, no obligation</span>
+            <span>✓ Local Arkansas team</span>
+          </div>
         </form>
       </div>
     </section>
