@@ -240,8 +240,10 @@ p{margin:0}
 .photo-preview:empty{display:none}
 .photo-thumb{width:64px;height:64px;object-fit:cover;border-radius:8px;border:2px solid var(--line)}
 
+/* city / state / zip: city gets more space */
+.field-row--addr{grid-template-columns:2fr 1fr 1fr}
 /* field-row collapses to single column on mobile */
-@media(max-width:600px){.field-row{grid-template-columns:1fr}}
+@media(max-width:600px){.field-row,.field-row--addr{grid-template-columns:1fr}}
 
 /* ============================ FAQ ============================ */
 .faq{padding:clamp(3.5rem,7vw,6rem) 0}

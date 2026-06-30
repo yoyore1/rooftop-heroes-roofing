@@ -310,8 +310,22 @@
             </div>
           </div>
           <div class="field">
-            <label for="f-address">Property address <span>(optional)</span></label>
-            <input id="f-address" name="address" type="text" autocomplete="street-address" placeholder="123 Main St, Little Rock, AR">
+            <label for="f-address">Street address <span>(optional)</span></label>
+            <input id="f-address" name="address" type="text" autocomplete="street-address" placeholder="123 Main St">
+          </div>
+          <div class="field-row field-row--addr">
+            <div class="field">
+              <label for="f-city">City <span>(optional)</span></label>
+              <input id="f-city" name="city" type="text" autocomplete="address-level2" placeholder="Little Rock">
+            </div>
+            <div class="field">
+              <label for="f-state">State</label>
+              <input id="f-state" name="state" type="text" autocomplete="address-level1" placeholder="AR" maxlength="2" value="AR">
+            </div>
+            <div class="field">
+              <label for="f-zip">ZIP <span>(optional)</span></label>
+              <input id="f-zip" name="zip" type="text" autocomplete="postal-code" placeholder="72201" maxlength="10" inputmode="numeric">
+            </div>
           </div>
           <div class="field-row">
             <div class="field">
