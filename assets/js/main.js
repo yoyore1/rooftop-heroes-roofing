@@ -59,15 +59,34 @@
     const defaultMsg = status ? status.textContent : "";
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const data = Object.fromEntries(new FormData(form).entries());
-      if (status) { status.textContent = "Sending…"; status.className = "inspect__fine"; }
+      const fd = new FormData(form);
+      const photoFile = fd.get("photo");
+      const data = Object.fromEntries([...fd.entries()].filter(([k]) => k !== "photo"));
 
       const name = (data.name || "").trim();
       const phone = (data.phone || "").trim();
       if (name.length < 2) return fail("Please enter your name.");
       if (phone.replace(/\D/g, "").length < 7) return fail("Please enter a valid phone number.");
 
-      const payload = { ...data, _ts: LOAD_TS };
+      if (status) { status.textContent = "Sending…"; status.className = "inspect__fine"; }
+
+      // Upload photo first if one was attached
+      let photo_url = null;
+      if (photoFile && photoFile.size > 0) {
+        if (status) status.textContent = "Uploading photo…";
+        try {
+          const up = await fetch("/api/upload", {
+            method: "POST",
+            headers: { "Content-Type": photoFile.type || "image/jpeg" },
+            body: photoFile,
+          });
+          const upj = await up.json().catch(() => ({}));
+          if (up.ok && upj.ok) photo_url = upj.url;
+          if (status) status.textContent = "Sending…";
+        } catch { /* photo failed — continue without it */ }
+      }
+
+      const payload = { ...data, _ts: LOAD_TS, ...(photo_url ? { photo_url } : {}) };
       try {
         const res = await fetch("/api/estimate", {
           method: "POST",
@@ -82,7 +101,6 @@
           fail(json.error || "Something went wrong. Please call (501) 772-8243.");
         }
       } catch {
-        // No backend yet (e.g. local static) — fall back gracefully
         if (status) { status.textContent = "✅ Thanks! Please call (501) 772-8243 to confirm your inspection time."; status.className = "inspect__fine is-ok"; }
         form.reset();
       }

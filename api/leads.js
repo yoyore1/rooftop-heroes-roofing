@@ -1,9 +1,10 @@
 // Dashboard data endpoint (auth required via the session cookie).
-//   GET   -> { leads: [...] }        most recent first
-//   PATCH -> { id, status?, notes? } update a single lead
+//   GET    -> { leads: [...] }               most recent first
+//   PATCH  -> { id, status?, notes?, followup_date? }
+//   DELETE -> { id }                         remove a lead
 
 import { isAuthed } from "../lib/auth.js";
-import { listLeads, updateLead, dbConfigured } from "../lib/db.js";
+import { listLeads, updateLead, deleteLead, dbConfigured } from "../lib/db.js";
 
 const STATUSES = ["new", "called", "quoted", "won", "lost"];
 
@@ -28,13 +29,28 @@ export default async function handler(req, res) {
         patch.status = b.status;
       }
       if (b.notes != null) patch.notes = String(b.notes).slice(0, 2000);
+      if ("followup_date" in b) {
+        const fd = b.followup_date;
+        if (fd !== null && fd !== "" && !/^\d{4}-\d{2}-\d{2}$/.test(String(fd))) {
+          return res.status(400).json({ ok: false, error: "Invalid followup_date" });
+        }
+        patch.followup_date = fd || null;
+      }
       if (!Object.keys(patch).length) return res.status(400).json({ ok: false, error: "Nothing to update" });
 
       const lead = await updateLead(id, patch);
       return res.status(200).json({ ok: true, lead });
     }
 
-    res.setHeader("Allow", "GET, PATCH");
+    if (req.method === "DELETE") {
+      const b = (req.body && typeof req.body === "object") ? req.body : safeParse(req.body);
+      const id = String(b.id || "");
+      if (!id) return res.status(400).json({ ok: false, error: "Missing id" });
+      await deleteLead(id);
+      return res.status(200).json({ ok: true });
+    }
+
+    res.setHeader("Allow", "GET, PATCH, DELETE");
     return res.status(405).json({ ok: false, error: "Method not allowed" });
   } catch (e) {
     console.error("[leads]", e.message);

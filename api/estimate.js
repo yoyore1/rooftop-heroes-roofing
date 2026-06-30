@@ -25,12 +25,14 @@ export default async function handler(req, res) {
   if (name.length < 2) return res.status(400).json({ ok: false, error: "Please enter your name" });
   if (phone.replace(/\D/g, "").length < 7) return res.status(400).json({ ok: false, error: "Please enter a valid phone number" });
 
+  const photoUrl = String(b.photo_url || "").trim();
   const lead = {
     name: name.slice(0, 80),
     phone: phone.slice(0, 30),
     address: String(b.address || "").trim().slice(0, 160) || null,
     service: String(b.service || "").trim().slice(0, 80) || null,
     message: String(b.message || "").trim().slice(0, 2000) || null,
+    photo_url: photoUrl.startsWith("https://") ? photoUrl : null,
     source: "website",
   };
 

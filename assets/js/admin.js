@@ -5,7 +5,7 @@
   const $ = (s, r = document) => r.querySelector(s);
   const STATUSES = ["new", "called", "won", "lost"];
   const LABELS = { new: "New", called: "Called", won: "Won", lost: "Lost" };
-  const SEARCH_AFTER = 6; // only show the search box once there are this many leads
+  const SEARCH_AFTER = 6;
 
   const views = { login: $('[data-view="login"]'), dash: $('[data-view="dash"]') };
   const loginForm = $("[data-login]");
@@ -14,6 +14,13 @@
   const listEl = $("[data-list]");
   const searchEl = $("[data-search]");
   const toastEl = $("[data-toast]");
+
+  // Lightbox for full-size roof photos
+  const lightbox = document.createElement("div");
+  lightbox.className = "lightbox";
+  lightbox.innerHTML = `<img alt="Roof photo">`;
+  document.body.appendChild(lightbox);
+  lightbox.addEventListener("click", () => lightbox.classList.remove("open"));
 
   let leads = [];
   let query = "";
@@ -98,22 +105,25 @@
 
   function render(fresh) {
     const newCount = leads.filter((l) => l.status === "new").length;
+    const today = new Date().toISOString().slice(0, 10);
+    const overdueCount = leads.filter((l) => l.followup_date && l.followup_date < today).length;
 
-    // friendly one-line summary
     if (!leads.length) { summaryEl.textContent = ""; summaryEl.className = "summary"; }
     else if (newCount) {
       summaryEl.className = "summary is-new";
       summaryEl.innerHTML = `🔔 ${newCount} new lead${newCount > 1 ? "s" : ""} to call`
         + `<small>${leads.length} total · tap the green button to call</small>`;
+    } else if (overdueCount) {
+      summaryEl.className = "summary is-new";
+      summaryEl.innerHTML = `⚠️ ${overdueCount} overdue follow-up${overdueCount > 1 ? "s" : ""}`
+        + `<small>${leads.length} total lead${leads.length > 1 ? "s" : ""}</small>`;
     } else {
       summaryEl.className = "summary";
       summaryEl.innerHTML = `✅ All caught up<small>${leads.length} total lead${leads.length > 1 ? "s" : ""}</small>`;
     }
 
-    // search only appears once the list gets long
     searchEl.classList.toggle("hidden", leads.length <= SEARCH_AFTER);
 
-    // newest + still-new leads float to the top
     let rows = leads.slice().sort((a, b) => {
       const an = a.status === "new" ? 0 : 1, bn = b.status === "new" ? 0 : 1;
       if (an !== bn) return an - bn;
@@ -136,27 +146,51 @@
   }
 
   function card(l, isFresh) {
+    const today = new Date().toISOString().slice(0, 10);
+    const isOverdue = l.followup_date && l.followup_date < today;
+    const isDueToday = l.followup_date && l.followup_date === today;
     const isNew = l.status === "new";
+
     const svc = l.service ? `<span class="lead__svc">${esc(l.service)}</span>` : "";
     const addr = l.address
       ? `<a class="lead__addr" href="https://maps.google.com/?q=${encodeURIComponent(l.address)}" target="_blank" rel="noopener">📍 ${esc(l.address)}</a>`
       : "";
     const msg = l.message ? `<div class="lead__msg">${esc(l.message)}</div>` : "";
+    const photo = l.photo_url
+      ? `<img class="lead__photo" src="${esc(l.photo_url)}" alt="Roof photo" loading="lazy" data-photo="${esc(l.photo_url)}">`
+      : "";
+
+    const followupTag = l.followup_date
+      ? (isOverdue
+          ? `<span class="tag-overdue">⚠️ Follow up: ${fmtDate(l.followup_date)}</span>`
+          : isDueToday
+            ? `<span class="tag-today">🔔 Follow up: Today</span>`
+            : `<span style="font-size:13px;color:var(--muted)">📅 Follow up: ${fmtDate(l.followup_date)}</span>`)
+      : "";
+
     const pills = STATUSES.map((s) =>
       `<button class="pill ${l.status === s ? "is-on" : ""}" data-s="${s}" data-set>${LABELS[s]}</button>`).join("");
-    return `<article class="lead ${isFresh ? "is-fresh" : ""}" data-id="${esc(l.id)}">
+
+    return `<article class="lead ${isFresh ? "is-fresh" : ""} ${isOverdue ? "is-overdue" : ""}" data-id="${esc(l.id)}">
       <div class="lead__head">
         <span class="lead__name">${esc(l.name)}</span>
         ${isNew ? `<span class="badge-new">New</span>` : ""}
         ${svc}
+        <button class="lead__del" data-delete title="Delete lead">🗑</button>
       </div>
-      <div class="lead__time">${timeAgo(l.created_at)}</div>
+      <div class="lead__time">${timeAgo(l.created_at)}${followupTag ? " · " + followupTag : ""}</div>
       <a class="lead__call" href="tel:${esc(telHref(l.phone))}">📞 Call ${esc(l.phone)}</a>
       ${addr}
       ${msg}
+      ${photo}
       <div class="status">
         <div class="status__label">Where's it at?</div>
         <div class="status__btns">${pills}</div>
+      </div>
+      <div class="followup">
+        <span class="followup__label">Follow-up date</span>
+        <input type="date" class="followup__input" data-followup value="${esc(l.followup_date || "")}">
+        ${l.followup_date ? `<button class="followup__clear" data-clear-followup>Clear</button>` : ""}
       </div>
       <input class="notes" data-notes placeholder="Add a note (e.g. left a voicemail)" value="${esc(l.notes || "")}">
     </article>`;
@@ -165,15 +199,19 @@
   function wire() {
     listEl.querySelectorAll(".lead").forEach((el) => {
       const id = el.dataset.id;
+
+      // Status pills
       el.querySelectorAll("[data-set]").forEach((btn) => {
         btn.addEventListener("click", async () => {
           const status = btn.dataset.s;
           el.querySelectorAll("[data-set]").forEach((b) => b.classList.toggle("is-on", b === btn));
           const l = leads.find((x) => x.id === id); if (l) l.status = status;
           await patch(id, { status });
-          render([]); // re-sort + refresh the summary
+          render([]);
         });
       });
+
+      // Notes
       const notes = el.querySelector("[data-notes]");
       let last = notes.value;
       notes.addEventListener("blur", async () => {
@@ -182,6 +220,48 @@
         const l = leads.find((x) => x.id === id); if (l) l.notes = notes.value;
         await patch(id, { notes: notes.value });
       });
+
+      // Follow-up date
+      const followupInput = el.querySelector("[data-followup]");
+      if (followupInput) {
+        followupInput.addEventListener("change", async () => {
+          const val = followupInput.value || null;
+          const l = leads.find((x) => x.id === id); if (l) l.followup_date = val;
+          await patch(id, { followup_date: val });
+          render([]);
+        });
+      }
+
+      // Clear follow-up
+      const clearBtn = el.querySelector("[data-clear-followup]");
+      if (clearBtn) {
+        clearBtn.addEventListener("click", async () => {
+          const l = leads.find((x) => x.id === id); if (l) l.followup_date = null;
+          await patch(id, { followup_date: null });
+          render([]);
+        });
+      }
+
+      // Delete
+      const delBtn = el.querySelector("[data-delete]");
+      if (delBtn) {
+        delBtn.addEventListener("click", async () => {
+          if (!confirm("Delete this lead? This can't be undone.")) return;
+          await del(id);
+          leads = leads.filter((l) => l.id !== id);
+          knownIds.delete(id);
+          render([]);
+        });
+      }
+
+      // Photo lightbox
+      const photoImg = el.querySelector("[data-photo]");
+      if (photoImg) {
+        photoImg.addEventListener("click", () => {
+          lightbox.querySelector("img").src = photoImg.dataset.photo;
+          lightbox.classList.add("open");
+        });
+      }
     });
   }
 
@@ -192,6 +272,16 @@
         body: JSON.stringify({ id, ...body }),
       });
       if (!r.ok) toast("Couldn't save — try again");
+    } catch { toast("Network error"); }
+  }
+
+  async function del(id) {
+    try {
+      const r = await fetch("/api/leads", {
+        method: "DELETE", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!r.ok) toast("Couldn't delete — try again");
     } catch { toast("Network error"); }
   }
 
@@ -206,6 +296,11 @@
     const d = c.replace(/\D/g, "");
     return d.length === 10 ? "+1" + d : "+" + d;
   }
+  function fmtDate(iso) {
+    if (!iso) return "";
+    const [, m, d] = iso.split("-");
+    return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][parseInt(m) - 1] + " " + parseInt(d);
+  }
   function timeAgo(iso) {
     const t = new Date(iso).getTime();
     if (isNaN(t)) return "";
@@ -213,7 +308,7 @@
     if (s < 60) return "just now";
     const m = Math.floor(s / 60); if (m < 60) return `${m} min ago`;
     const h = Math.floor(m / 60); if (h < 24) return `${h} hr${h > 1 ? "s" : ""} ago`;
-    const d = Math.floor(h / 24); if (d < 7) return `${d} day${d > 1 ? "s" : ""} ago`;
+    const dd = Math.floor(h / 24); if (dd < 7) return `${dd} day${dd > 1 ? "s" : ""} ago`;
     return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   }
 
