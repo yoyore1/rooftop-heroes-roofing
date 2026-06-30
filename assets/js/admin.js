@@ -68,7 +68,7 @@
 
   /* ---------- dashboard ---------- */
   function startDash() { show("dash"); load(); startPoll(); }
-  function startPoll() { stopPoll(); pollTimer = setInterval(() => load(true), 20000); }
+  function startPoll() { stopPoll(); pollTimer = setInterval(() => load(true), 8000); }
   function stopPoll() { if (pollTimer) clearInterval(pollTimer); pollTimer = null; }
 
   document.addEventListener("visibilitychange", () => {
