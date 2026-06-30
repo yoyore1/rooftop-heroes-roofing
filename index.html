@@ -458,22 +458,7 @@
     <a class="dock__cta" href="#inspection">Free Inspection</a>
   </div>
 
-  <script src="/assets/js/main.js?v=2" defer></script>
-  <script>
-    function initGoogleMaps() {
-      var input = document.getElementById("f-address");
-      if (!input || !window.google) return;
-      var ac = new google.maps.places.Autocomplete(input, {
-        types: ["address"],
-        componentRestrictions: { country: "us" },
-        fields: ["formatted_address"],
-      });
-      ac.addListener("place_changed", function () {
-        var place = ac.getPlace();
-        if (place.formatted_address) input.value = place.formatted_address;
-      });
-    }
-  </script>
+  <script src="/assets/js/main.js?v=3" defer></script>
   <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCBF_mubTZsjv7Z4WP5gRPnj54Kc27XmxA&libraries=places&callback=initGoogleMaps"></script>
 </body>
 </html>

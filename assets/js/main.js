@@ -136,3 +136,18 @@
     form.addEventListener("input", () => { if (status && status.classList.contains("is-err")) { status.textContent = defaultMsg; status.className = "inspect__fine"; } });
   }
 })();
+
+// Google Maps Places Autocomplete callback — must be a named global
+window.initGoogleMaps = function () {
+  var input = document.getElementById("f-address");
+  if (!input || !window.google) return;
+  var ac = new google.maps.places.Autocomplete(input, {
+    types: ["address"],
+    componentRestrictions: { country: "us" },
+    fields: ["formatted_address"],
+  });
+  ac.addListener("place_changed", function () {
+    var place = ac.getPlace();
+    if (place.formatted_address) input.value = place.formatted_address;
+  });
+};
