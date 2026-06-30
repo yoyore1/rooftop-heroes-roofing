@@ -25,7 +25,8 @@ export default async function handler(req, res) {
   if (name.length < 2) return res.status(400).json({ ok: false, error: "Please enter your name" });
   if (phone.replace(/\D/g, "").length < 7) return res.status(400).json({ ok: false, error: "Please enter a valid phone number" });
 
-  const photoUrl = String(b.photo_url || "").trim();
+  const rawUrls = Array.isArray(b.photo_urls) ? b.photo_urls : [];
+  const validUrls = rawUrls.map(u => String(u).trim()).filter(u => u.startsWith("https://")).slice(0, 10);
   const lead = {
     name: name.slice(0, 80),
     phone: phone.slice(0, 30),
@@ -33,7 +34,8 @@ export default async function handler(req, res) {
     service: String(b.service || "").trim().slice(0, 80) || null,
     best_time: String(b.best_time || "").trim().slice(0, 40) || null,
     message: String(b.message || "").trim().slice(0, 2000) || null,
-    photo_url: photoUrl.startsWith("https://") ? photoUrl : null,
+    photo_url: validUrls[0] || null,
+    photo_urls: validUrls,
     source: "website",
   };
 

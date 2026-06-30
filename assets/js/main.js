@@ -57,19 +57,27 @@
     const status = $("[data-form-status]", form);
     const LOAD_TS = Date.now();
     const defaultMsg = status ? status.textContent : "";
-    // Show filename when photo is selected
+    // Photo preview + label update on file select
     const photoInput = $("[data-file-input]", form);
     const fileText = $("[data-file-text]", form);
-    const fileLabel = photoInput && photoInput.closest(".file-label");
-    if (photoInput && fileText) {
+    const fileLabel = $("[data-file-label]", form);
+    const previewEl = $("[data-photo-preview]", form);
+    if (photoInput) {
       photoInput.addEventListener("change", () => {
-        const f = photoInput.files[0];
-        if (f) {
-          fileText.textContent = f.name;
-          if (fileLabel) fileLabel.classList.add("has-file");
-        } else {
-          fileText.innerHTML = 'Attach a photo of your roof <span>(optional)</span>';
-          if (fileLabel) fileLabel.classList.remove("has-file");
+        const files = Array.from(photoInput.files || []);
+        if (fileText) {
+          fileText.innerHTML = files.length
+            ? `${files.length} photo${files.length > 1 ? "s" : ""} selected`
+            : 'Attach photos of your roof <span>(optional — up to 10)</span>';
+        }
+        if (fileLabel) fileLabel.classList.toggle("has-file", files.length > 0);
+        if (previewEl) {
+          // revoke old object URLs
+          previewEl.querySelectorAll("img").forEach(img => URL.revokeObjectURL(img.src));
+          previewEl.innerHTML = files.slice(0, 10).map(f => {
+            const url = URL.createObjectURL(f);
+            return `<img class="photo-thumb" src="${url}" alt="${f.name}">`;
+          }).join("");
         }
       });
     }
@@ -77,7 +85,7 @@
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(form);
-      const photoFile = fd.get("photo");
+      const photoFiles = Array.from(fd.getAll("photo")).filter(f => f instanceof File && f.size > 0).slice(0, 10);
       const data = Object.fromEntries([...fd.entries()].filter(([k]) => k !== "photo"));
 
       const name = (data.name || "").trim();
@@ -87,23 +95,25 @@
 
       if (status) { status.textContent = "Sending…"; status.className = "inspect__fine"; }
 
-      // Upload photo first if one was attached
-      let photo_url = null;
-      if (photoFile && photoFile.size > 0) {
-        if (status) status.textContent = "Uploading photo…";
-        try {
-          const up = await fetch("/api/upload", {
-            method: "POST",
-            headers: { "Content-Type": photoFile.type || "image/jpeg" },
-            body: photoFile,
-          });
-          const upj = await up.json().catch(() => ({}));
-          if (up.ok && upj.ok) photo_url = upj.url;
-          if (status) status.textContent = "Sending…";
-        } catch { /* photo failed — continue without it */ }
+      // Upload all photos in parallel, then submit
+      let photo_urls = [];
+      if (photoFiles.length) {
+        if (status) status.textContent = `Uploading ${photoFiles.length} photo${photoFiles.length > 1 ? "s" : ""}…`;
+        photo_urls = (await Promise.all(photoFiles.map(async f => {
+          try {
+            const up = await fetch("/api/upload", {
+              method: "POST",
+              headers: { "Content-Type": f.type || "image/jpeg" },
+              body: f,
+            });
+            const j = await up.json().catch(() => ({}));
+            return up.ok && j.ok ? j.url : null;
+          } catch { return null; }
+        }))).filter(Boolean);
+        if (status) status.textContent = "Sending…";
       }
 
-      const payload = { ...data, _ts: LOAD_TS, ...(photo_url ? { photo_url } : {}) };
+      const payload = { ...data, _ts: LOAD_TS, photo_urls };
       try {
         const res = await fetch("/api/estimate", {
           method: "POST",

@@ -235,6 +235,11 @@ p{margin:0}
 /* trust strip below submit */
 .form-trust{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:.75rem;color:#8a9ab5;padding-top:2px}
 
+/* photo thumbnail previews below file input */
+.photo-preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.photo-preview:empty{display:none}
+.photo-thumb{width:64px;height:64px;object-fit:cover;border-radius:8px;border:2px solid var(--line)}
+
 /* field-row collapses to single column on mobile */
 @media(max-width:600px){.field-row{grid-template-columns:1fr}}
 

@@ -217,8 +217,10 @@
       ? `<a class="lead__addr" href="https://maps.google.com/?q=${encodeURIComponent(l.address)}" target="_blank" rel="noopener">📍 ${esc(l.address)}</a>`
       : "";
     const msg = l.message ? `<div class="lead__msg">${esc(l.message)}</div>` : "";
-    const photo = l.photo_url
-      ? `<img class="lead__photo" src="${esc(l.photo_url)}" alt="Roof photo" loading="lazy" data-photo="${esc(l.photo_url)}">`
+    const photos = [...new Set([l.photo_url, ...(l.photo_urls || [])].filter(Boolean))];
+    const gridClass = photos.length === 1 ? "lead__photos--1" : photos.length === 2 ? "lead__photos--2" : "lead__photos--many";
+    const photo = photos.length
+      ? `<div class="lead__photos ${gridClass}">${photos.map(u => `<img class="lead__photo-thumb" src="${esc(u)}" alt="Roof photo" loading="lazy" data-photo="${esc(u)}">`).join("")}</div>`
       : "";
     const bestTime = l.best_time && l.best_time !== "Anytime"
       ? `<div class="lead__besttime">🕐 Best time: ${esc(l.best_time)}</div>` : "";
@@ -322,13 +324,12 @@
         });
       }
 
-      const photoImg = el.querySelector("[data-photo]");
-      if (photoImg) {
-        photoImg.addEventListener("click", () => {
-          lightbox.querySelector("img").src = photoImg.dataset.photo;
+      el.querySelectorAll("[data-photo]").forEach(img => {
+        img.addEventListener("click", () => {
+          lightbox.querySelector("img").src = img.dataset.photo;
           lightbox.classList.add("open");
         });
-      }
+      });
     });
   }
 
