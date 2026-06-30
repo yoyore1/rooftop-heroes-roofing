@@ -64,6 +64,18 @@
     .refresh-btn:active { background:#fff5f5; }
     .refresh-btn:disabled { opacity:.55; cursor:default; }
 
+    /* ---- action bar (alerts / refresh / sign out) ---- */
+    .actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:6px 2px 16px; }
+    .actions__spacer { flex:1; }
+    .action-btn { display:inline-flex; align-items:center; gap:5px; white-space:nowrap;
+      background:#fff; color:var(--red); border:1.5px solid var(--red); border-radius:10px;
+      padding:9px 13px; font-size:14px; font-weight:700; cursor:pointer; }
+    .action-btn:active { background:#fff5f5; }
+    .action-btn:disabled { opacity:.55; cursor:default; }
+    .action-btn.is-on { background:var(--green); color:#fff; border-color:var(--green); }
+    .action-btn--ghost { color:var(--muted); border-color:var(--line); }
+    .action-btn--ghost:active { background:var(--bg); }
+
     .search { width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:11px;
       font-size:16px; margin-bottom:14px; outline:none; background:#fff; }
     .search:focus { border-color:var(--red); }
@@ -176,13 +188,13 @@
   <section data-view="dash" class="hidden">
     <header class="top">
       <div class="top__title">🦸 Leads <span class="live" title="Live — updates automatically"></span></div>
-      <div class="top__spacer"></div>
-      <button class="top__btn" data-logout>Sign out</button>
     </header>
     <div class="wrap">
-      <div class="summary-row">
-        <div class="summary" data-summary></div>
-        <button class="refresh-btn" data-refresh title="Check for new leads now">↻ Refresh</button>
+      <div class="actions">
+        <button class="action-btn" data-push hidden title="Get a phone notification for every new lead">🔕 Turn on alerts</button>
+        <button class="action-btn" data-refresh title="Check for new leads now">↻ Refresh</button>
+        <span class="actions__spacer"></span>
+        <button class="action-btn action-btn--ghost" data-logout>Sign out</button>
       </div>
       <input class="search hidden" data-search placeholder="Search a name or phone…">
       <div data-list></div>
@@ -194,7 +206,7 @@
   </section>
 
   <div class="toast" data-toast></div>
-  <script src="/assets/js/admin.js?v=4"></script>
+  <script src="/assets/js/admin.js?v=10"></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js");

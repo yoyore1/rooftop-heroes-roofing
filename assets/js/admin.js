@@ -81,7 +81,7 @@
   }
 
   /* ---------- dashboard ---------- */
-  function startDash() { show("dash"); load(); startPoll(); }
+  function startDash() { show("dash"); load(); startPoll(); refreshPushBtn(); }
   function startPoll() { stopPoll(); pollTimer = setInterval(() => load(true), 8000); }
   function stopPoll() { if (pollTimer) clearInterval(pollTimer); pollTimer = null; }
 
@@ -172,22 +172,24 @@
   searchEl.addEventListener("input", () => { query = searchEl.value.trim().toLowerCase(); render([]); });
 
   function render(fresh) {
-    const newCount = leads.filter((l) => l.status === "new").length;
-    const today = new Date().toISOString().slice(0, 10);
-    const overdueCount = leads.filter((l) => l.followup_date && l.followup_date < today).length;
+    if (summaryEl) {
+      const newCount = leads.filter((l) => l.status === "new").length;
+      const today = new Date().toISOString().slice(0, 10);
+      const overdueCount = leads.filter((l) => l.followup_date && l.followup_date < today).length;
 
-    if (!leads.length) { summaryEl.textContent = ""; summaryEl.className = "summary"; }
-    else if (newCount) {
-      summaryEl.className = "summary is-new";
-      summaryEl.innerHTML = `🔔 ${newCount} new lead${newCount > 1 ? "s" : ""} to call`
-        + `<small>${leads.length} total · tap the green button to call</small>`;
-    } else if (overdueCount) {
-      summaryEl.className = "summary is-new";
-      summaryEl.innerHTML = `⚠️ ${overdueCount} overdue follow-up${overdueCount > 1 ? "s" : ""}`
-        + `<small>${leads.length} total lead${leads.length > 1 ? "s" : ""}</small>`;
-    } else {
-      summaryEl.className = "summary";
-      summaryEl.innerHTML = `✅ All caught up<small>${leads.length} total lead${leads.length > 1 ? "s" : ""}</small>`;
+      if (!leads.length) { summaryEl.textContent = ""; summaryEl.className = "summary"; }
+      else if (newCount) {
+        summaryEl.className = "summary is-new";
+        summaryEl.innerHTML = `🔔 ${newCount} new lead${newCount > 1 ? "s" : ""} to call`
+          + `<small>${leads.length} total · tap the green button to call</small>`;
+      } else if (overdueCount) {
+        summaryEl.className = "summary is-new";
+        summaryEl.innerHTML = `⚠️ ${overdueCount} overdue follow-up${overdueCount > 1 ? "s" : ""}`
+          + `<small>${leads.length} total lead${leads.length > 1 ? "s" : ""}</small>`;
+      } else {
+        summaryEl.className = "summary";
+        summaryEl.innerHTML = `✅ All caught up<small>${leads.length} total lead${leads.length > 1 ? "s" : ""}</small>`;
+      }
     }
 
     searchEl.classList.toggle("hidden", leads.length <= SEARCH_AFTER);
@@ -339,6 +341,144 @@
     } catch { toast("Network error"); }
   }
 
+  /* ---------- push notifications ---------- */
+  const pushBtn = $("[data-push]");
+  const pushSupported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  // True when launched from an installed Home Screen / app icon (not a browser tab).
+  const isStandalone = window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true;
+
+  function urlB64ToUint8(base64) {
+    const padding = "=".repeat((4 - (base64.length % 4)) % 4);
+    const b64 = (base64 + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const raw = atob(b64);
+    const out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+
+  function showIosInstall() {
+    alert(
+      "To get lead alerts on iPhone:\n\n" +
+      "1.  Tap the Share button (the square with an ↑) at the bottom of Safari\n" +
+      "2.  Scroll down and tap \"Add to Home Screen\"\n" +
+      "3.  Open the app from the new icon on your home screen\n" +
+      "4.  Tap \"Turn on alerts\" again\n\n" +
+      "Apple only lets installed apps send notifications — it can't work from the Safari tab."
+    );
+  }
+
+  async function refreshPushBtn() {
+    if (!pushBtn) return;
+
+    // iPhone: Web Push only works from the installed Home Screen app, never the
+    // Safari tab. Guide the user to install instead of leaving a dead button.
+    if (isIOS && !isStandalone) {
+      pushBtn.hidden = false;
+      pushBtn.textContent = "📲 Add to Home Screen for alerts";
+      pushBtn.dataset.on = ""; pushBtn.dataset.ios = "1";
+      pushBtn.classList.remove("is-on");
+      return;
+    }
+    pushBtn.dataset.ios = "";
+
+    // Hide entirely if the device can't do push or the user blocked it.
+    if (!pushSupported || Notification.permission === "denied") { pushBtn.hidden = true; return; }
+    pushBtn.hidden = false;
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) { pushBtn.textContent = "🔔 Alerts on"; pushBtn.dataset.on = "1"; pushBtn.classList.add("is-on"); }
+      else { pushBtn.textContent = "🔕 Turn on alerts"; pushBtn.dataset.on = ""; pushBtn.classList.remove("is-on"); }
+    } catch { pushBtn.textContent = "🔕 Turn on alerts"; pushBtn.dataset.on = ""; pushBtn.classList.remove("is-on"); }
+  }
+
+  async function enablePush() {
+    if (isIOS && !isStandalone) { showIosInstall(); return; }
+    if (!pushSupported) { toast("This browser can't do alerts — try Chrome"); return; }
+    try {
+      toast("Step 1: requesting permission…");
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") { toast("❌ Permission denied — tap Allow when asked"); return; }
+
+      toast("Step 2: fetching server key…");
+      const r = await fetch("/api/push");
+      const j = await r.json().catch(() => ({}));
+      if (!j.key) { toast("❌ Server key missing — contact support"); return; }
+
+      toast("Step 3: registering service worker…");
+      let reg;
+      try {
+        reg = await navigator.serviceWorker.register("/sw.js");
+      } catch (regErr) {
+        toast("❌ SW register failed: " + (regErr?.message || regErr));
+        return;
+      }
+
+      // Wait for an active worker (push needs one). More lenient than
+      // navigator.serviceWorker.ready, which also waits for page control.
+      if (!reg.active) {
+        toast("Step 3b: activating worker…");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("worker didn't activate (12s)")), 12000);
+          const done = () => { if (reg.active) { clearTimeout(timer); resolve(); } };
+          const sw = reg.installing || reg.waiting;
+          if (sw) sw.addEventListener("statechange", done);
+          done();
+        });
+      }
+
+      toast("Step 4: subscribing…");
+      if (!reg.pushManager) { toast("❌ No pushManager on this device"); return; }
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlB64ToUint8(j.key),
+        });
+      }
+
+      toast("Step 5: saving subscription…");
+      const save = await fetch("/api/push", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscription: sub.toJSON() }),
+      });
+      if (!save.ok) { toast("❌ Save failed: " + save.status); return; }
+
+      toast("🔔 Alerts on — new leads will buzz this phone");
+      refreshPushBtn();
+    } catch (e) {
+      toast("❌ Failed at: " + (e?.message || e?.name || String(e)));
+    }
+  }
+
+  async function disablePush() {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        try {
+          await fetch("/api/push", {
+            method: "DELETE", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ endpoint: sub.endpoint }),
+          });
+        } catch {}
+        await sub.unsubscribe();
+      }
+      toast("Alerts off");
+      refreshPushBtn();
+    } catch { toast("Couldn't turn off alerts"); }
+  }
+
+  if (pushBtn) {
+    pushBtn.addEventListener("click", () => {
+      if (pushBtn.dataset.ios) { showIosInstall(); return; }
+      if (pushBtn.dataset.on) disablePush(); else enablePush();
+    });
+  }
+
   /* ---------- helpers ---------- */
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, (ch) =>
@@ -367,9 +507,9 @@
   }
 
   let toastTimer = null;
-  function toast(msg) {
+  function toast(msg, duration = 4500) {
     toastEl.textContent = msg; toastEl.classList.add("show");
-    clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove("show"), 3800);
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove("show"), duration);
   }
   function ping() {
     try {

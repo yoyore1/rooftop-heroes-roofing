@@ -8,5 +8,8 @@
     "dev": "node _dev.mjs 3200",
     "preview": "node _serve.mjs 3200"
   },
+  "dependencies": {
+    "web-push": "^3.6.7"
+  },
   "engines": { "node": ">=18" }
 }

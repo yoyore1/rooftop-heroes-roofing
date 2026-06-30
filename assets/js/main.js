@@ -95,10 +95,10 @@
   }
 })();
 
-// Google Maps Places Autocomplete callback — must be a named global
+// Google Maps Places Autocomplete callback — must be a named global.
 window.initGoogleMaps = function () {
   var input = document.getElementById("f-address");
-  if (!input || !window.google) return;
+  if (!input || !window.google || !google.maps || !google.maps.places) return;
   var ac = new google.maps.places.Autocomplete(input, {
     types: ["address"],
     componentRestrictions: { country: "us" },
@@ -109,3 +109,17 @@ window.initGoogleMaps = function () {
     if (place.formatted_address) input.value = place.formatted_address;
   });
 };
+
+// Load the Google Maps SDK ONLY after the callback above is defined, so
+// `callback=initGoogleMaps` can never fire before it exists. Loading it from
+// the page with `async` raced against this deferred script — on slower devices
+// (mobile) Maps often won the race and the autocomplete silently never set up.
+(function loadGoogleMaps() {
+  if (document.getElementById("gmaps-sdk") || window.google) return;
+  var s = document.createElement("script");
+  s.id = "gmaps-sdk";
+  s.async = true;
+  s.defer = true;
+  s.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCBF_mubTZsjv7Z4WP5gRPnj54Kc27XmxA&libraries=places&callback=initGoogleMaps";
+  document.head.appendChild(s);
+})();
