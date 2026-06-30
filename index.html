@@ -310,45 +310,20 @@
             </div>
           </div>
           <div class="field">
-            <label for="f-address">Street address <span>(optional)</span></label>
-            <input id="f-address" name="address" type="text" autocomplete="street-address" placeholder="123 Main St">
+            <label for="f-address">Property address <span>(optional)</span></label>
+            <input id="f-address" name="address" type="text" autocomplete="off" placeholder="Start typing your address…">
           </div>
-          <div class="field-row field-row--addr">
-            <div class="field">
-              <label for="f-city">City <span>(optional)</span></label>
-              <input id="f-city" name="city" type="text" autocomplete="address-level2" placeholder="Little Rock">
-            </div>
-            <div class="field">
-              <label for="f-state">State</label>
-              <input id="f-state" name="state" type="text" autocomplete="address-level1" placeholder="AR" maxlength="2" value="AR">
-            </div>
-            <div class="field">
-              <label for="f-zip">ZIP <span>(optional)</span></label>
-              <input id="f-zip" name="zip" type="text" autocomplete="postal-code" placeholder="72201" maxlength="10" inputmode="numeric">
-            </div>
-          </div>
-          <div class="field-row">
-            <div class="field">
-              <label for="f-service">What do you need?</label>
-              <select id="f-service" name="service">
-                <option>Free roof inspection</option>
-                <option>Roof repair</option>
-                <option>Roof replacement</option>
-                <option>Storm / hail damage</option>
-                <option>Insurance claim help</option>
-                <option>Roof maintenance</option>
-                <option>Something else</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="f-time">Best time to call?</label>
-              <select id="f-time" name="best_time">
-                <option value="Anytime">Anytime works</option>
-                <option value="Morning (8 am–12 pm)">Morning (8 am – 12 pm)</option>
-                <option value="Afternoon (12–5 pm)">Afternoon (12 – 5 pm)</option>
-                <option value="Evening (5–8 pm)">Evening (5 – 8 pm)</option>
-              </select>
-            </div>
+          <div class="field">
+            <label for="f-service">What do you need?</label>
+            <select id="f-service" name="service">
+              <option>Free roof inspection</option>
+              <option>Roof repair</option>
+              <option>Roof replacement</option>
+              <option>Storm / hail damage</option>
+              <option>Insurance claim help</option>
+              <option>Roof maintenance</option>
+              <option>Something else</option>
+            </select>
           </div>
           <div class="field">
             <label for="f-msg">Anything we should know? <span>(optional)</span></label>
@@ -484,5 +459,21 @@
   </div>
 
   <script src="/assets/js/main.js?v=2" defer></script>
+  <script>
+    function initGoogleMaps() {
+      var input = document.getElementById("f-address");
+      if (!input || !window.google) return;
+      var ac = new google.maps.places.Autocomplete(input, {
+        types: ["address"],
+        componentRestrictions: { country: "us" },
+        fields: ["formatted_address"],
+      });
+      ac.addListener("place_changed", function () {
+        var place = ac.getPlace();
+        if (place.formatted_address) input.value = place.formatted_address;
+      });
+    }
+  </script>
+  <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCBF_mubTZsjv7Z4WP5gRPnj54Kc27XmxA&libraries=places&callback=initGoogleMaps"></script>
 </body>
 </html>

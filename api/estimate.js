@@ -28,20 +28,11 @@ export default async function handler(req, res) {
   const rawUrls = Array.isArray(b.photo_urls) ? b.photo_urls : [];
   const validUrls = rawUrls.map(u => String(u).trim()).filter(u => u.startsWith("https://")).slice(0, 10);
 
-  // Combine split address fields into "123 Main St, Little Rock, AR 72201"
-  const street   = String(b.address || "").trim();
-  const city     = String(b.city    || "").trim();
-  const state    = String(b.state   || "").trim();
-  const zip      = String(b.zip     || "").trim();
-  const cityLine = [city, [state, zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
-  const fullAddr = [street, cityLine].filter(Boolean).join(", ").slice(0, 200) || null;
-
   const lead = {
     name: name.slice(0, 80),
     phone: phone.slice(0, 30),
-    address: fullAddr,
+    address: String(b.address || "").trim().slice(0, 200) || null,
     service: String(b.service || "").trim().slice(0, 80) || null,
-    best_time: String(b.best_time || "").trim().slice(0, 40) || null,
     message: String(b.message || "").trim().slice(0, 2000) || null,
     photo_url: validUrls[0] || null,
     photo_urls: validUrls,

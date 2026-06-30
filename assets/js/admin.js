@@ -222,9 +222,6 @@
     const photo = photos.length
       ? `<div class="lead__photos ${gridClass}">${photos.map(u => `<img class="lead__photo-thumb" src="${esc(u)}" alt="Roof photo" loading="lazy" data-photo="${esc(u)}">`).join("")}</div>`
       : "";
-    const bestTime = l.best_time && l.best_time !== "Anytime"
-      ? `<div class="lead__besttime">🕐 Best time: ${esc(l.best_time)}</div>` : "";
-
     const followupTag = l.followup_date
       ? (isOverdue
           ? `<span class="tag-overdue">⚠️ Follow up: ${fmtDate(l.followup_date)}</span>`
@@ -245,7 +242,6 @@
       </div>
       <div class="lead__time">${timeAgo(l.created_at)}${followupTag ? " · " + followupTag : ""}</div>
       <a class="lead__call" href="tel:${esc(telHref(l.phone))}">📞 Call ${esc(l.phone)}</a>
-      ${bestTime}
       ${addr}
       ${msg}
       ${photo}
