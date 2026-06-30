@@ -242,6 +242,10 @@ p{margin:0}
 
 /* city / state / zip: city gets more space */
 .field-row--addr{grid-template-columns:2fr 1fr 1fr}
+/* Google Places autocomplete dropdown */
+.pac-container{z-index:99999!important;border-radius:10px;border:1px solid var(--line);box-shadow:0 8px 24px -8px rgba(14,33,73,.18);font-family:inherit}
+.pac-item{padding:8px 14px;font-size:14px;cursor:pointer}
+.pac-item:hover,.pac-item-selected{background:var(--mist)}
 /* field-row collapses to single column on mobile */
 @media(max-width:600px){.field-row,.field-row--addr{grid-template-columns:1fr}}
 
